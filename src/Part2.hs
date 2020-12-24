@@ -60,13 +60,14 @@ prob10 c = Nothing
 --
 -- Найти сумму элементов дерева
 prob11 :: Num a => Tree a -> a
-prob11 tree = sum (toList tree)
+prob11 tree =
+    root tree +
+    fmap prob11 (left tree) `orElse` 0 +
+    fmap prob11 (right tree) `orElse` 0
 
-toList :: Tree a -> [a]
-toList tree = maybeToList (left tree) ++ [root tree] ++ maybeToList (right tree)
-  where
-    maybeToList (Just x) = toList x
-    maybeToList Nothing = []
+orElse :: Maybe a -> a -> a
+orElse (Just x) _ = x
+orElse Nothing x = x
 
 ------------------------------------------------------------
 -- PROBLEM #12
@@ -77,15 +78,18 @@ toList tree = maybeToList (left tree) ++ [root tree] ++ maybeToList (right tree)
 -- а все элементы правого поддерева -- не меньше элемента
 -- в узле)
 prob12 :: Ord a => Tree a -> Bool
-prob12 tree = secondLeaf (right tree) (root tree) && firstLeaf (left tree) (root tree)
+prob12 = checkTree
 
-secondLeaf :: Ord a => Maybe (Tree a) -> a -> Bool
-secondLeaf Nothing x = True
-secondLeaf (Just tree) parent = root tree >= parent && firstLeaf (left tree) (root tree) && secondLeaf (right tree) (root tree)
+checkTree :: Ord a => Tree a -> Bool
+checkTree tree = checkLeft (left tree) (root tree) && checkRight (right tree) (root tree)
 
-firstLeaf :: Ord a => Maybe (Tree a) -> a -> Bool
-firstLeaf Nothing x = True
-firstLeaf (Just tree) parent = root tree < parent && firstLeaf (left tree) (root tree) && secondLeaf (right tree) (root tree)
+checkRight :: Ord a => Maybe (Tree a) -> a -> Bool
+checkRight Nothing x = True
+checkRight (Just tree) parent = root tree >= parent && checkTree tree
+
+checkLeft :: Ord a => Maybe (Tree a) -> a -> Bool
+checkLeft Nothing x = True
+checkLeft (Just tree) parent = root tree < parent && checkTree tree
 
 ------------------------------------------------------------
 -- PROBLEM #13
@@ -109,7 +113,24 @@ hasValue a (Just tree)
 -- Заменить () на числа в порядке обхода "правый, левый,
 -- корень", начиная с 1
 prob14 :: Tree () -> Tree Int
-prob14 = error "Implement me!"
+prob14 tree = myTraverse tree (getNodesCountInTree tree) 
+
+myTraverse tree num = 
+  Tree (do
+     maybeLeftTree <- left tree
+     return (myTraverse maybeLeftTree (num - 1))
+  ) 
+  num 
+  (do 
+    maybeRightTree <- right tree
+    return (myTraverse maybeRightTree (getNumberForRightTree tree num))
+  )
+
+getNumberForRightTree tree num = case left tree of
+    Just leftSubTree -> num - (getNodesCountInTree leftSubTree + 1)
+    Nothing -> num - 1
+
+getNodesCountInTree tree = 1 + maybe 0 getNodesCountInTree (left tree) + maybe 0 getNodesCountInTree (right tree)
 
 ------------------------------------------------------------
 -- PROBLEM #15
@@ -117,7 +138,7 @@ prob14 = error "Implement me!"
 -- Выполнить вращение дерева влево относительно корня
 -- (https://en.wikipedia.org/wiki/Tree_rotation)
 prob15 :: Tree a -> Tree a
-prob15 = error "Implement me!"
+prob15 tree = maybe tree (\rt -> rt { left = Just ( tree { right = left rt  }) }) (right tree)
 
 ------------------------------------------------------------
 -- PROBLEM #16
@@ -125,7 +146,8 @@ prob15 = error "Implement me!"
 -- Выполнить вращение дерева вправо относительно корня
 -- (https://en.wikipedia.org/wiki/Tree_rotation)
 prob16 :: Tree a -> Tree a
-prob16 = error "Implement me!"
+prob16 tree = maybe tree (\lt -> lt { right = Just (tree { left = right lt  }) }) (left tree)
+
 
 ------------------------------------------------------------
 -- PROBLEM #17
