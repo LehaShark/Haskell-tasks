@@ -5,7 +5,14 @@ module Part3 where
 --
 -- Проверить, является ли число N простым (1 <= N <= 10^9)
 prob18 :: Integer -> Bool
-prob18 = error "Implement me!"
+prob18 1 = False
+prob18 m = isPrime m 2
+  where
+    isPrime :: Integer -> Integer -> Bool
+    isPrime m i
+      | i * i > m = True
+      | m `rem` i == 0 = False
+      | otherwise = isPrime m (i + 1)
 
 ------------------------------------------------------------
 -- PROBLEM #19
@@ -14,7 +21,10 @@ prob18 = error "Implement me!"
 -- разложении числа N (1 <= N <= 10^9). Простые делители
 -- должны быть расположены по возрастанию
 prob19 :: Integer -> [(Integer, Int)]
-prob19 = error "Implement me!"
+prob19 :: Integer -> [(Integer, Int)]
+prob19 number = let
+		groups = (map toList . group . primeDivisors) number
+	in map (\ group -> (head group, length group)) groups
 
 ------------------------------------------------------------
 -- PROBLEM #20
@@ -76,7 +86,10 @@ prob25 = error "Implement me!"
 -- сумма делителей одного (без учёта самого числа) равна
 -- другому, и наоборот
 prob26 :: Integer -> Integer -> Bool
-prob26 = error "Implement me!"
+prob26 x y = sum (divider x) == y && sum (divider y) == x
+  where
+    divider :: Integer -> [Integer]
+    divider n = [a | a <- [1 .. (n -1)], n `rem` a == 0]
 
 ------------------------------------------------------------
 -- PROBLEM #27
@@ -117,7 +130,7 @@ prob30 = error "Implement me!"
 -- Найти сумму всех пар различных дружественных чисел,
 -- меньших заданного N (1 <= N <= 10000)
 prob31 :: Int -> Int
-prob31 = error "Implement me!"
+prob31 n = sum [x + y |x <- [1 .. n],y <- [x+1 .. n], prob26 (toInteger x) (toInteger y)]
 
 ------------------------------------------------------------
 -- PROBLEM #32
@@ -127,4 +140,9 @@ prob31 = error "Implement me!"
 -- указанного достоинства
 -- Сумма не превосходит 100
 prob32 :: [Int] -> Int -> [[Int]]
-prob32 = error "Implement me!"
+prob32 coins coinsSum
+	| coinsSum < minimum coins = []
+	| otherwise = [coin : nextCoins |
+		coin <- reverse coins,
+		nextCoins <- [] : prob32 (filter (<= coin) coins) (coinsSum - coin),
+		sum (coin : nextCoins) == coinsSum]
