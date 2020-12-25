@@ -20,12 +20,24 @@ import Control.Applicative
 -- Написать экземпляр класса Functor для Parser
 -- (удовлетворяющий законам)
 instance Functor Parser where
+    fmap :: (a -> b) -> Parser a -> Parser b
+    fmap func (Parser parseFunc) = Parser $ (map (\(str, input) -> (str, func input))) . parseFunc
 ------------------------------------------------------------
 -- PROBLEM #34
 --
 -- Написать экземпляр класса Applicative для Parser
 -- (удовлетворяющий законам)
 instance Applicative Parser where
+    pure :: a -> Parser a
+    pure value = Parser $ \str -> [(str, value)]
+
+    (<*>) :: Parser (a -> b) -> Parser a -> Parser b
+    (Parser firstFunc) <*> (Parser secondFunc) = Parser parserFunc
+        where
+            parserFunc input = do
+                (firstString, applyFunc) <- (firstFunc input)
+                (secondString, item) <- (secondFunc firstString)
+                return (secondString, applyFunc item)
 ------------------------------------------------------------
 -- PROBLEM #35
 --

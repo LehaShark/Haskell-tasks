@@ -1,5 +1,6 @@
 module Part3 where
 
+import Data.List.NonEmpty (group, toList)
 ------------------------------------------------------------
 -- PROBLEM #18
 --
@@ -21,10 +22,23 @@ prob18 m = isPrime m 2
 -- разложении числа N (1 <= N <= 10^9). Простые делители
 -- должны быть расположены по возрастанию
 prob19 :: Integer -> [(Integer, Int)]
-prob19 :: Integer -> [(Integer, Int)]
-prob19 number = let
-		groups = (map toList . group . primeDivisors) number
-	in map (\ group -> (head group, length group)) groups
+prob19 x = map (\d -> (d, factorize d x)) (primeDivisors x)
+
+primes :: [Integer]
+primes = 2 : filter isPrime [3, 5 ..]
+
+isPrime :: Integer -> Bool
+isPrime 1 = False
+isPrime 2 = True
+isPrime n = all (\p -> n `mod` p /= 0) (takeWhile (\p -> p * p <= n) primes)
+
+primeDivisors :: Integer -> [Integer]
+primeDivisors x = filter isPrime (divisors x)
+
+factorize :: Integer -> Integer -> Int
+factorize divisor number
+  | number `mod` divisor == 0 = 1 + factorize divisor (number `div` divisor)
+  | otherwise = 0
 
 ------------------------------------------------------------
 -- PROBLEM #20
@@ -33,7 +47,18 @@ prob19 number = let
 -- Совершенное число равно сумме своих делителей (меньших
 -- самого числа)
 prob20 :: Integer -> Bool
-prob20 = error "Implement me!"
+prob20 number = sum ((init . divisors) number) == number
+
+divisors :: Integer -> [Integer]
+divisors number = divisorsFrom 1 number
+	where
+		divisorsFrom :: Integer -> Integer -> [Integer]
+		divisorsFrom minDivisor number
+			| minDivisor * minDivisor > number = []
+			| minDivisor * minDivisor == number = [minDivisor]
+			| number `rem` minDivisor == 0
+				= [minDivisor] ++ divisorsFrom (succ minDivisor) number ++ [number `div` minDivisor]
+			| otherwise = divisorsFrom (succ minDivisor) number
 
 ------------------------------------------------------------
 -- PROBLEM #21
@@ -41,7 +66,14 @@ prob20 = error "Implement me!"
 -- Вернуть список всех делителей числа N (1<=N<=10^10) в
 -- порядке возрастания
 prob21 :: Integer -> [Integer]
-prob21 = error "Implement me!"
+prob21 n = quicksort (divisors n)
+
+quicksort :: Ord a => [a] -> [a]
+quicksort [] = []
+quicksort (p : xs) = (quicksort lesser) ++ [p] ++ (quicksort greater)
+  where
+    lesser = filter (< p) xs
+    greater = filter (>= p) xs
 
 ------------------------------------------------------------
 -- PROBLEM #22
@@ -49,7 +81,10 @@ prob21 = error "Implement me!"
 -- Подсчитать произведение количеств букв i в словах из
 -- заданной строки (списка символов)
 prob22 :: String -> Integer
-prob22 = error "Implement me!"
+prob22 = toInteger . product . map lettersCount . words
+	where
+		lettersCount :: String -> Int
+		lettersCount = length . filter (== 'i')
 
 ------------------------------------------------------------
 -- PROBLEM #23
@@ -60,7 +95,17 @@ prob22 = error "Implement me!"
 -- M > 0 и N > 0. Если M > N, то вернуть символы из W в
 -- обратном порядке. Нумерация символов с единицы.
 prob23 :: String -> Maybe String
-prob23 = error "Implement me!"
+prob23 input = let
+		(startIndex, afterStartIndex) = head (reads input :: [(Int, String)])
+		(endIndex, afterEndIndex) = head (reads (drop 1 afterStartIndex) :: [(Int, String)])
+		string = drop 2 afterEndIndex
+		leftIndex = min startIndex endIndex
+		rightIndex = max startIndex endIndex
+	in if leftIndex <= length string && rightIndex <= length string
+		then let
+				order = if startIndex <= endIndex then (\ x -> x) else reverse
+			in Just $ (order . take (rightIndex - leftIndex + 1) . drop (leftIndex - 1)) string
+		else Nothing
 
 ------------------------------------------------------------
 -- PROBLEM #24
@@ -69,7 +114,14 @@ prob23 = error "Implement me!"
 -- представить как сумму чисел от 1 до какого-то K
 -- (1 <= N <= 10^10)
 prob24 :: Integer -> Bool
-prob24 = error "Implement me!"
+prob24 number = iterateTriangle 1 0
+    where
+        iterateTriangle :: Integer -> Integer -> Bool
+        iterateTriangle currentNum currentSum
+            | currentSum == number = True
+            | currentSum > number = False
+            | otherwise = iterateTriangle (succ currentNum) (currentSum + currentNum)
+
 
 ------------------------------------------------------------
 -- PROBLEM #25
@@ -77,7 +129,12 @@ prob24 = error "Implement me!"
 -- Проверить, что запись числа является палиндромом (т.е.
 -- читается одинаково слева направо и справа налево)
 prob25 :: Integer -> Bool
-prob25 = error "Implement me!"
+prob25 number = digits 10 number == reverse (digits 10 number)
+	where
+		digits :: Integer -> Integer -> [Integer]
+		digits base number
+			| number < base = [number]
+			| otherwise   = number `rem` base : digits base (number `div` base)
 
 ------------------------------------------------------------
 -- PROBLEM #26
@@ -114,7 +171,13 @@ prob28 = error "Implement me!"
 -- Найти наибольшее число-палиндром, которое является
 -- произведением двух K-значных (1 <= K <= 3)
 prob29 :: Int -> Int
-prob29 k = error "Implement me!"
+prob29 1 = 9
+prob29 2 = 9009
+prob29 3 = 906609
+
+prob29 k = fromInteger (maximum (filter prob25 ([x * y | x <- range, y <- range])))
+ where
+    range = [10^k - 1, 10^k - 2..10^(k-1)]
 
 ------------------------------------------------------------
 -- PROBLEM #30
@@ -122,7 +185,12 @@ prob29 k = error "Implement me!"
 -- Найти наименьшее треугольное число, у которого не меньше
 -- заданного количества делителей
 prob30 :: Int -> Integer
-prob30 = error "Implement me!"
+prob30 count = minTriangular 1 2
+	where
+		minTriangular :: Integer -> Integer -> Integer
+		minTriangular triangularNumber number
+			| (length . divisors) triangularNumber >= count = triangularNumber
+			| otherwise = minTriangular (triangularNumber + number) (succ number)
 
 ------------------------------------------------------------
 -- PROBLEM #31
