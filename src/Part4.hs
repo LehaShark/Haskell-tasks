@@ -82,6 +82,9 @@ instance Monad Parser where
 
 instance Functor (Foo r) where
 
+    fmap :: (a -> b) -> Foo r a -> Foo r b
+    fmap = error "Implement me!"
+
 ------------------------------------------------------------
 -- PROBLEM #38
 --
