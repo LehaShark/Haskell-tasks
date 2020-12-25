@@ -1,6 +1,8 @@
 module Part3 where
 
 import Data.List.NonEmpty (group, toList)
+import Data.List (group, nub, sort, find)
+import Data.Bool (bool)
 ------------------------------------------------------------
 -- PROBLEM #18
 --
@@ -154,7 +156,15 @@ prob26 x y = sum (divider x) == y && sum (divider y) == x
 -- Найти в списке два числа, сумма которых равна заданному.
 -- Длина списка не превосходит 500
 prob27 :: Int -> [Int] -> Maybe (Int, Int)
-prob27 = error "Implement me!"
+prob27 _ [] = Nothing
+prob27 requiredSum (curHead : curTail) = withFixedCurrent curHead curTail
+    where
+        withFixedCurrent :: Int -> [Int] -> Maybe (Int, Int)
+        withFixedCurrent _ [] = prob27 requiredSum curTail
+        withFixedCurrent current (innerHead : innerTail) =
+            if current + innerHead == requiredSum
+            then Just (current, innerHead)
+            else withFixedCurrent current innerTail
 
 ------------------------------------------------------------
 -- PROBLEM #28
@@ -163,7 +173,22 @@ prob27 = error "Implement me!"
 -- заданному.
 -- Длина списка не превосходит 500
 prob28 :: Int -> [Int] -> Maybe (Int, Int, Int, Int)
-prob28 = error "Implement me!"
+prob28 requiredSum inputList = do
+    list <- find
+            (\list -> sum list == requiredSum)
+            $ subsets 4 inputList
+    return (list !! 3, list !! 2, list !! 1, list !! 0)
+    where
+        subsets :: Int -> [a] -> [[a]]
+        subsets subLength listToHandle =
+            if subLength > length listToHandle
+            then []
+            else subsequencesBySize listToHandle !! (length listToHandle - subLength)
+
+        subsequencesBySize [] = [[[]]]
+        subsequencesBySize (curHead : curTail) =
+            let next = subsequencesBySize curTail
+            in zipWith (++) ([] : next) (map (map (curHead :)) next ++ [[]])
 
 ------------------------------------------------------------
 -- PROBLEM #29
