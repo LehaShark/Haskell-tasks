@@ -1,3 +1,5 @@
+{-# LANGUAGE InstanceSigs #-}
+
 module Part4 where
 
 -- | 8 tasks:
@@ -13,6 +15,12 @@ module Part4 where
 import Part4.Types
 
 import Control.Applicative
+import Control.Applicative
+import Control.Monad (msum)
+import Data.Maybe (maybeToList, fromJust)
+import Data.Char (intToDigit, isSpace, isDigit)
+import Text.Read (readMaybe)
+import Data.List (isInfixOf, dropWhileEnd, elemIndex)
 
 ------------------------------------------------------------
 -- PROBLEM #33
@@ -32,12 +40,12 @@ instance Applicative Parser where
     pure value = Parser $ \str -> [(str, value)]
 
     (<*>) :: Parser (a -> b) -> Parser a -> Parser b
-    (Parser firstFunc) <*> (Parser secondFunc) = Parser parserFunc
+    (Parser leftFunc) <*> (Parser rightFunc) = Parser parserFunc
         where
             parserFunc input = do
-                (firstString, applyFunc) <- (firstFunc input)
-                (secondString, item) <- (secondFunc firstString)
-                return (secondString, applyFunc item)
+                (leftString, funcToApply) <- (leftFunc input)
+                (rightString, item) <- (rightFunc leftString)
+                return (rightString, funcToApply item)
 ------------------------------------------------------------
 -- PROBLEM #35
 --
